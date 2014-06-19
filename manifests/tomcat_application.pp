@@ -1,8 +1,11 @@
 define tomcat7_rhel::tomcat_application(
+  $http_port = 80,
+  $https_port = 443,
   $application_name = $title,
   $application_root,
   $tomcat_user,
   $tomcat_port,
+  $tomcats_port = 8443,
   $tomcat_control_port = ($tomcat_port + 1000),
   $jvm_envs,
   $tomcat_manager = false,
@@ -46,10 +49,12 @@ define tomcat7_rhel::tomcat_application(
     require   => Package['tomcat7']
   }
 
-  file { "/etc/init.d/$application_name":
-    ensure => link,
-    target => "/etc/init.d/tomcat7",
-    require => Package['tomcat7']
+  if $application_name != "tomcat7" {
+    file { "/etc/init.d/$application_name":
+      ensure => link,
+      target => "/etc/init.d/tomcat7",
+      require => Package['tomcat7']
+    }
   }
 
   if $tomcat_manager == true {
