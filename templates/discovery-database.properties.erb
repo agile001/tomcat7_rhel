@@ -1,0 +1,8 @@
+# <%= @application_name %> Database Connection Details
+db.url=jdbc:mysql://<%= @database_server %>:3306/<%= @database_instance %>
+db.user=<%= @database_uid %>
+db.password=<%= @database_pwd %>
+db.driver=com.mysql.jdbc.Driver
+jpa.vendor.database=MYSQL
+jpa.hibernate.dialect=org.hibernate.dialect.MySQL5InnoDBDialect
+jpa.hibernate.hbm2ddl.auto=update
