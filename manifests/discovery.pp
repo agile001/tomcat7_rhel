@@ -26,6 +26,9 @@ class tomcat7_rhel::discovery (
   $application_cache = "/var/cache/$application_name"
   $catalina_home = "/usr/share/tomcat7"
 
+  $war_dir = "$application_dir/webapps/ROOT"
+  $war_file = "$application_dir/webapps/ROOT.war"
+
   file { "/etc/init.d/tomcat7":
     ensure  => file,
     source  => "puppet:///modules/tomcat7_rhel/etc/init.d/tomcat7",
@@ -75,11 +78,11 @@ class tomcat7_rhel::discovery (
   wget::fetch { "$discovery_url":
     user        => "$artifactory_uid",
     password    => "$artifactory_pwd",
-    destination => "$application_dir/webapps/ROOT.war",
+    destination => "${war_file}",
     cache_dir   => "$application_cache",
     cache_file  => "$discovery_war",
     execuser    => "$tomcat_user",
-    notify      => [ Exec["unpack_war"], Service["$application_name"]],
+    notify      => [ Exec["clean_discovery_war"], Exec["unpack_war"], Service["$application_name"]],
     verbose     => false
   } 
   
@@ -98,17 +101,17 @@ class tomcat7_rhel::discovery (
     cache_dir   => "$application_cache",
     cache_file  => "$static_war",
     execuser    => "$tomcat_user",
-    notify  => Service["$application_name"],
+    notify      => [ Exec["clean_static_war"], Service["$application_name"]],
     verbose     => false
   }
 
-  file { "$application_dir/webapps/ROOT/WEB-INF/classes/META-INF/spring/discovery-database.properties":
+  file { "${war_dir}/WEB-INF/classes/META-INF/spring/discovery-database.properties":
     content => template("tomcat7_rhel/discovery-database.properties.erb"),
     owner   => "$tomcat_user",
     group   => "$tomcat_user",
     mode    => 0644,    
     notify  => Service["$application_name"],
-    require => [ File["$application_dir/webapps/ROOT.war"], Exec["unpack_war"]]
+    require => [ File["${war_file}"], Exec["unpack_war"]]
   }
   
   firewall { '100 Tomcat7 port redirect for http':
@@ -129,51 +132,63 @@ class tomcat7_rhel::discovery (
     table    => 'nat'
   }
 
-  exec {"unpack_war":
-    command => "/bin/mkdir -p $application_dir/webapps/ROOT; /usr/bin/unzip -o -q $application_dir/webapps/ROOT.war -d $application_dir/webapps/ROOT",
-    creates => "$application_dir/webapps/ROOT",
+  exec { 'clean_discovery_war': 
+    command => "/bin/rm -Rf ${war_dir}",
     refreshonly => true,
     user => "$tomcat_user",
-    notify => [ File["$application_dir/webapps/ROOT/WEB-INF/classes/META-INF/spring/discovery-database.properties"] ]
+  }
+
+  exec { 'clean_static_war': 
+    command => "/bin/rm -Rf ${application_dir}/webapps/static",
+    refreshonly => true,
+    user => "$tomcat_user",
+  }
+
+  exec {"unpack_war":
+    command => "/bin/mkdir -p ${war_dir}; /usr/bin/unzip -o -q ${war_file} -d ${war_dir}",
+    creates => "${war_dir}",
+    refreshonly => true,
+    user => "$tomcat_user",
+    notify => [ File["${war_dir}/WEB-INF/classes/META-INF/spring/discovery-database.properties"] ]
   }
 
   file { "$application_cache":
     ensure => directory
   }
 
-  file { "$application_dir/webapps/ROOT/WEB-INF/lib":
+  file { "${war_dir}/WEB-INF/lib":
     ensure  => directory,
-    require => [ Exec["unpack_war"], File["$application_dir/webapps/ROOT.war"]]
+    require => [ Exec["unpack_war"], File["${war_file}"]]
   }
 
   exec { 'tidy-classes-jars':
     command => "/usr/bin/find ${application_dir}/webapps/ROOT/WEB-INF/lib/*classes.jar -type f -exec rm {} \;",
     onlyif  => "/usr/bin/find ${application_dir}/webapps/ROOT/WEB-INF/lib/*classes.jar -type f", 
-    require => [ File["$application_dir/webapps/ROOT/WEB-INF/lib"]]
+    require => [ File["${war_dir}/WEB-INF/lib"]]
   }
 
-#  tidy { "$application_dir/webapps/ROOT/WEB-INF/lib/":
+#  tidy { "${war_dir}/WEB-INF/lib/":
 #    recurse => true,
 #    matches => [ "*classes.jar" ],
-#    require => [ File["$application_dir/webapps/ROOT/WEB-INF/lib"]],
+#    require => [ File["${war_dir}/WEB-INF/lib"]],
 #    notify  => Service["$application_name"]
 #  }
 
-#  file { "$application_dir/webapps/ROOT/WEB-INF/lib/riskflo-discovery-web-2.0.9-classes.jar":
+#  file { "${war_dir}/WEB-INF/lib/riskflo-discovery-web-2.0.9-classes.jar":
 #    ensure  => absent,
-#    require => File["$application_dir/webapps/ROOT/WEB-INF/lib"],    
+#    require => File["${war_dir}/WEB-INF/lib"],    
 #    notify  => Service["$application_name"]
 #  }
 
-#  file { "$application_dir/webapps/ROOT/WEB-INF/lib/riskflo-engage-web-2.0.9-classes.jar":
+#  file { "${war_dir}/WEB-INF/lib/riskflo-engage-web-2.0.9-classes.jar":
 #    ensure  => absent,
-#    require => File["$application_dir/webapps/ROOT/WEB-INF/lib"],    
+#    require => File["${war_dir}/WEB-INF/lib"],    
 #    notify  => Service["$application_name"]
 #  }
 
-#  file { "$application_dir/webapps/ROOT/WEB-INF/lib/riskflo-irp-web-2.0.9-classes.jar":
+#  file { "${war_dir}/WEB-INF/lib/riskflo-irp-web-2.0.9-classes.jar":
 #    ensure  => absent,
-#    require => File["$application_dir/webapps/ROOT/WEB-INF/lib"],    
+#    require => File["${war_dir}/WEB-INF/lib"],    
 #    notify  => Service["$application_name"]
 #  }
 }
