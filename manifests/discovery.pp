@@ -5,9 +5,9 @@ class tomcat7_rhel::discovery (
   $tomcats_port = 8443,
   $tomcat_user = "tomcat",
   $jvm_envs = "-server -Xms512m -Xmx3072m -XX:MaxPermSize=512m",
-  $discovery_version = "2.0.9",
+  $discovery_version = "2.1.0",
   $platform_snapshot = "20140619.072517-23",
-  $static_version = "2.0.9",
+  $static_version = "2.1.0",
   $static_snapshot = "20140619.071039-26",
   $database_server,
   $database_instance,
@@ -59,54 +59,49 @@ class tomcat7_rhel::discovery (
     require => Package['tomcat7']
   }
   
-  if $platform_snapshot = '' {
-    $discovery_war = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/discovery/riskflo-platform-web/$discovery_version/riskflo-platform-web-$discovery_version.war"
+  if $platform_snapshot == '' {
+    $discovery_war = "riskflo-platform-web-$discovery_version.war"
+    $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/discovery/riskflo-platform-web/$discovery_version/riskflo-platform-web-$discovery_version.war"
   } else {
-    $discovery_war = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/discovery/riskflo-platform-web/${discovery_version}-SNAPSHOT/riskflo-platform-web-${discovery_version}-${platform_snapshot}.war"
+    $discovery_war = "riskflo-platform-web-${discovery_version}-${platform_snapshot}.war"
+    $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/discovery/riskflo-platform-web/${discovery_version}-SNAPSHOT/riskflo-platform-web-${discovery_version}-${platform_snapshot}.war"
   }
   
-  if $static_snapshot = '' {
-    $static_war = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/discovery/riskflo-static-web/${static_version}/riskflo-static-web-${static_version}.war"
+#  notify {'Discovery_war':
+#    message => "Getting ready to download: $discovery_war from $discovery_url",
+#    notify => Wget::Fetch["$discovery_url"]
+#  }
+
+  wget::fetch { "$discovery_url":
+    user        => "$artifactory_uid",
+    password    => "$artifactory_pwd",
+    destination => "$application_dir/webapps/ROOT.war",
+    cache_dir   => "$application_cache",
+    cache_file  => "$discovery_war",
+    execuser    => "$tomcat_user",
+    notify      => [ Exec["unpack_war"], Service["$application_name"]],
+    verbose     => false
+  } 
+  
+  if $static_snapshot == '' {
+    $static_war = "riskflo-static-web-${static_version}.war"
+    $static_url = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/discovery/riskflo-static-web/${static_version}/riskflo-static-web-${static_version}.war"
   } else {
-    $static_war = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/discovery/riskflo-static-web/${static_version}-SNAPSHOT/riskflo-static-web-${static_version}-${static_snapshot}.war"
+    $static_war = "riskflo-static-web-${static_version}-${static_snapshot}.war"
+    $static_url = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/discovery/riskflo-static-web/${static_version}-SNAPSHOT/riskflo-static-web-${static_version}-${static_snapshot}.war"
   }
   
-  wget::fetch { '$discovery_war':
-    user        => '$artifactory_uid',
-    password    => '$artifactory_pwd',
-    destination => '$application_dir/webapps/ROOT.war',
-    cache_dir   => '$application_cache',
-  }
-
-  wget::fetch { '$static_war':
-    user        => '$artifactory_uid',
-    password    => '$artifactory_pwd',
-    destination => '$application_dir/webapps/static.war',
-    cache_dir   => '$application_cache',
-  }
-
-  file { "$application_dir/webapps/ROOT.war":
-    ensure  => file, 
-    # source  => "puppet:///modules/tomcat7_rhel/riskflo-platform-web-$discovery_version-$platform_snapshot.war",
-    owner   => "$tomcat_user",
-    group   => "$tomcat_user",
-    mode    => 0644,
-    notify  => [ Exec["unpack_war"], Service["$application_name"]],
-    #require => File["$application_dir/webapps"]
-    require => Wget::Fetch['$discovery_war']
-  }
-  
-  file { "$application_dir/webapps/static.war":
-    ensure  => file, 
-    #source  => "puppet:///modules/tomcat7_rhel/riskflo-static-web-$discovery_version-$static_snapshot.war",
-    owner   => "$tomcat_user",
-    group   => "$tomcat_user",
-    mode    => 0644,
+  wget::fetch { "$static_url":
+    user        => "$artifactory_uid",
+    password    => "$artifactory_pwd",
+    destination => "$application_dir/webapps/static.war",
+    cache_dir   => "$application_cache",
+    cache_file  => "$static_war",
+    execuser    => "$tomcat_user",
     notify  => Service["$application_name"],
-    #require => File["$application_dir/webapps"]
-    require => Wget::Fetch['$static_war']
+    verbose     => false
   }
- 
+
   file { "$application_dir/webapps/ROOT/WEB-INF/classes/META-INF/spring/discovery-database.properties":
     content => template("tomcat7_rhel/discovery-database.properties.erb"),
     owner   => "$tomcat_user",
@@ -116,10 +111,6 @@ class tomcat7_rhel::discovery (
     require => [ File["$application_dir/webapps/ROOT.war"], Exec["unpack_war"]]
   }
   
-  #file { "$application_dir/webapps/ROOT/WEB-INF/lib/":
-  #  ensure => absent
-  #}
-
   firewall { '100 Tomcat7 port redirect for http':
     chain    => 'PREROUTING',
     jump     => 'REDIRECT',
@@ -143,5 +134,46 @@ class tomcat7_rhel::discovery (
     creates => "$application_dir/webapps/ROOT",
     refreshonly => true,
     user => "$tomcat_user",
+    notify => [ File["$application_dir/webapps/ROOT/WEB-INF/classes/META-INF/spring/discovery-database.properties"] ]
   }
+
+  file { "$application_cache":
+    ensure => directory
+  }
+
+  file { "$application_dir/webapps/ROOT/WEB-INF/lib":
+    ensure  => directory,
+    require => [ Exec["unpack_war"], File["$application_dir/webapps/ROOT.war"]]
+  }
+
+  exec { 'tidy-classes-jars':
+    command => "/usr/bin/find ${application_dir}/webapps/ROOT/WEB-INF/lib/*classes.jar -type f -exec rm {} \;",
+    onlyif  => "/usr/bin/find ${application_dir}/webapps/ROOT/WEB-INF/lib/*classes.jar -type f", 
+    require => [ File["$application_dir/webapps/ROOT/WEB-INF/lib"]]
+  }
+
+#  tidy { "$application_dir/webapps/ROOT/WEB-INF/lib/":
+#    recurse => true,
+#    matches => [ "*classes.jar" ],
+#    require => [ File["$application_dir/webapps/ROOT/WEB-INF/lib"]],
+#    notify  => Service["$application_name"]
+#  }
+
+#  file { "$application_dir/webapps/ROOT/WEB-INF/lib/riskflo-discovery-web-2.0.9-classes.jar":
+#    ensure  => absent,
+#    require => File["$application_dir/webapps/ROOT/WEB-INF/lib"],    
+#    notify  => Service["$application_name"]
+#  }
+
+#  file { "$application_dir/webapps/ROOT/WEB-INF/lib/riskflo-engage-web-2.0.9-classes.jar":
+#    ensure  => absent,
+#    require => File["$application_dir/webapps/ROOT/WEB-INF/lib"],    
+#    notify  => Service["$application_name"]
+#  }
+
+#  file { "$application_dir/webapps/ROOT/WEB-INF/lib/riskflo-irp-web-2.0.9-classes.jar":
+#    ensure  => absent,
+#    require => File["$application_dir/webapps/ROOT/WEB-INF/lib"],    
+#    notify  => Service["$application_name"]
+#  }
 }
