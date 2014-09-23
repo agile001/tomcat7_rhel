@@ -1,0 +1,63 @@
+{
+  "author": "",
+  "checksums": {
+    "manifests/tomcat_instances.pp": "4b18bbde5622e026e24daa31544e6d67",
+    "templates/tomcat-users.xml.erb": "32a30730588d674cab1eb13de4586cd7",
+    "spec/fixtures/manifests/site.pp": "d41d8cd98f00b204e9800998ecf8427e",
+    "files/.keystore": "7075d6c1cfcdc2f883e490fcebed5dde",
+    "manifests/discovery.pp": "a9f1a0a18ab05be18fccce3aa5f311b6",
+    "templates/run_smoke_test.sh.erb": "f3f255f7f3f72a970938fe1c6ddb7cde",
+    "spec/spec_helper.rb": "792eeb7aa7edafb93e2bc1d27c5e75c5",
+    "LICENSE": "c916e892d626bf90084a8cc0de59a481",
+    "templates/manager.xml.erb": "9352b11801ccf21fde8cb741d4322916",
+    "spec/classes/jpackage_repo_spec.rb": "d5886a095422148528110374d54925ea",
+    "templates/check_memory_leaks.sh.erb": "3daa4ed70d267b70e821c341a7d90189",
+    "templates/undeploy_with_tomcat_manager.sh.erb": "8f326b37f32a91ca828e5fe2d62cc6ad",
+    "templates/server.xml.erb": "b7d6ac942e29b25bd80f736d9eef7df6",
+    "manifests/init.pp": "6673d0a67c1e6ff845f500b2983282f0",
+    "templates/database.properties.erb": "f8411220d2f1714c10ebb57533edb2aa",
+    "manifests/jpackage_repo.pp": "cfbaf933e19282fd400a5c73fe8c8272",
+    "files/riskflo-static-web-2.1.0-20140619.071039-26.war": "69769225fad444f8d0a067a25f3ca947",
+    ".puppet-lint.rc": "4c846d21b85a679424ef55c0127f1b3e",
+    "templates/deploy_with_tomcat_manager.sh.erb": "e91f05f35e9d6e3d097b6912ba89a5fc",
+    "README.md": "dd31bf9a7742bd040a2bb659d72bc181",
+    "spec/classes/tomcat7_rhel_spec.rb": "cda82c24a83b62e22634f9050dd6aede",
+    "manifests/tomcat7_manager_package.pp": "82409419cf8eeea139f54a7bf5275908",
+    "Rakefile": "0e575d6d4d261f8eabb992fa9a8e63ae",
+    "Gemfile": "8f05a1467857e521befcee9f12937eee",
+    "templates/list-applications.sh.erb": "aba3ac9c49d28e4d8cb1ee282203a41b",
+    "spec/defines/tomcat7_rhel__tomcat_application_spec.rb": "e01ff0cbd070b281b2acf66262d421b1",
+    "manifests/tomcat_manager.pp": "8a30cbc4cba05ca5c1a9e5c2195d54ff",
+    "templates/etc/logrotate.d/tomcat7.erb": "fb7c1848852a536af9b28f7239251d89",
+    "files/etc/init.d/tomcat7": "e02527fa57ad4f286fa8f97b5ff165e1",
+    "templates/etc/sysconfig/tomcat7.erb": "7248f1cfbae9a8c437482a4e22e06784",
+    "Modulefile": "d876dc3143020e669f3a0a78b2296303",
+    "files/riskflo-engage-web-1.0.9.war": "2fbc5e4f58a9b27e0104924cd7750eac",
+    "templates/discovery-database.properties.erb": "f8411220d2f1714c10ebb57533edb2aa",
+    "manifests/standard.pp": "4456138640146c59baf32fd168465589",
+    "templates/web.xml.erb": "151f408fa3b69809dff31c3686f2de16",
+    "changelog.md": "39b8ed781652719ca10abc17f90cd173",
+    "manifests/tomcat_application.pp": "a16dfa2e994d0fa48dd93183833ce51e",
+    "files/riskflo-engage-static-1.0.9.war": "c71c9186b6d95df178472a8455e5a1e8",
+    "files/fetch_engage_wars.sh": "0f33de246b17e27931fc013140e43163",
+    "Gemfile.lock": "770f62ddb95f1cc2655c284bd9cd0ea7"
+  },
+  "dependencies": [
+    {
+      "name": "maestrodev/wget",
+      "version_requirement": "1.4.4"
+    },
+    {
+      "name": "puppetlabs/firewall",
+      "version_requirement": "1.1.1"
+    }
+  ],
+  "description": "Tomcat 7 on RHEL 6",
+  "license": "",
+  "name": "llehmijo-tomcat7_rhel",
+  "project_page": "",
+  "source": "",
+  "summary": "",
+  "types": [],
+  "version": "2.6.0"
+}
