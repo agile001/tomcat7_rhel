@@ -13,6 +13,7 @@ class tomcat7_rhel::discovery (
   $database_instance,
   $database_uid,
   $database_pwd,
+  $database_show_sql = false,
   $artifactory_uid,
   $artifactory_pwd
   ) {
