@@ -113,7 +113,7 @@ class tomcat7_rhel::engage (
     refreshonly => true,
     user => "$tomcat_user",
     subscribe => [Wget::Fetch["$engage_url"]],
-    notify => [ File["${war_dir}/WEB-INF/classes/META-INF/spring/engage-database.properties"], Service["$application_name"] ]
+    notify => [ File["${war_dir}/WEB-INF/classes/META-INF/spring/database.properties"], Service["$application_name"] ]
   } 
   
   exec {"unpack_static":
