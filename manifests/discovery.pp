@@ -13,6 +13,7 @@ class tomcat7_rhel::discovery (
   $database_instance,
   $database_uid,
   $database_pwd,
+  $database_show_sql = false,
   $artifactory_uid,
   $artifactory_pwd
   ) {
@@ -27,7 +28,10 @@ class tomcat7_rhel::discovery (
   $catalina_home = "/usr/share/tomcat7"
 
   $war_dir = "$application_dir/webapps/ROOT"
-  $war_file = "$application_dir/webapps/ROOT.war"
+  $war_file = "$application_cache/ROOT.war"
+
+  $static_dir = "$application_dir/webapps/static"
+  $static_file = "$application_cache/static.war"
 
   file { "/etc/init.d/tomcat7":
     ensure  => file,
@@ -62,6 +66,10 @@ class tomcat7_rhel::discovery (
     require => Package['tomcat7']
   }
   
+  file { "$application_cache":
+    ensure => directory
+  } 
+  
   if $platform_snapshot == '' {
     $discovery_war = "riskflo-platform-web-$discovery_version.war"
     $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/discovery/riskflo-platform-web/$discovery_version/riskflo-platform-web-$discovery_version.war"
@@ -70,11 +78,6 @@ class tomcat7_rhel::discovery (
     $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/discovery/riskflo-platform-web/${discovery_version}-SNAPSHOT/riskflo-platform-web-${discovery_version}-${platform_snapshot}.war"
   }
   
-#  notify {'Discovery_war':
-#    message => "Getting ready to download: $discovery_war from $discovery_url",
-#    notify => Wget::Fetch["$discovery_url"]
-#  }
-
   wget::fetch { "$discovery_url":
     user        => "$artifactory_uid",
     password    => "$artifactory_pwd",
@@ -82,7 +85,7 @@ class tomcat7_rhel::discovery (
     cache_dir   => "$application_cache",
     cache_file  => "$discovery_war",
     execuser    => "$tomcat_user",
-    notify      => [ Exec["clean_discovery_war"], Exec["unpack_war"], Service["$application_name"]],
+    notify      => [ Exec["unpack_discovery"], Service["$application_name"]],
     verbose     => false
   } 
   
@@ -97,22 +100,38 @@ class tomcat7_rhel::discovery (
   wget::fetch { "$static_url":
     user        => "$artifactory_uid",
     password    => "$artifactory_pwd",
-    destination => "$application_dir/webapps/static.war",
+    destination => "$static_file",
     cache_dir   => "$application_cache",
     cache_file  => "$static_war",
     execuser    => "$tomcat_user",
-    notify      => [ Exec["clean_static_war"], Service["$application_name"]],
-    verbose     => false
+    verbose     => false,
+    notify      => [ Exec["unpack_static"], Service["$application_name"]],
   }
 
+  exec {"unpack_discovery":
+    command => "/bin/rm -Rf ${war_dir}; /bin/mkdir -p ${war_dir}; /usr/bin/unzip -o -q ${application_cache}/${discovery_war} -d ${war_dir}; /usr/bin/find ${war_dir}/WEB-INF/lib/*classes.jar -type f -exec rm {} \;",
+    refreshonly => true,
+    user => "$tomcat_user",
+    subscribe => [Wget::Fetch["$discovery_url"]],
+    notify => [ File["${war_dir}/WEB-INF/classes/META-INF/spring/discovery-database.properties"], Service["$application_name"] ]
+  } 
+  
+  exec {"unpack_static":
+    command => "/bin/rm -Rf ${static_dir}; /bin/mkdir -p ${static_dir}; /usr/bin/unzip -o -q ${application_cache}/${static_war} -d ${static_dir};",
+    refreshonly => true,
+    user => "$tomcat_user",
+    subscribe => [Wget::Fetch["$static_url"]],
+    notify => [ Service["$application_name"]]
+  } 
+  
   file { "${war_dir}/WEB-INF/classes/META-INF/spring/discovery-database.properties":
     content => template("tomcat7_rhel/discovery-database.properties.erb"),
     owner   => "$tomcat_user",
     group   => "$tomcat_user",
     mode    => 0644,    
+    subscribe => [ Exec["unpack_discovery"]],
     notify  => Service["$application_name"],
-    require => [ File["${war_file}"], Exec["unpack_war"]]
-  }
+  } 
   
   firewall { '100 Tomcat7 port redirect for http':
     chain    => 'PREROUTING',
@@ -131,64 +150,4 @@ class tomcat7_rhel::discovery (
     toports  => $tomcats_port,
     table    => 'nat'
   }
-
-  exec { 'clean_discovery_war': 
-    command => "/bin/rm -Rf ${war_dir}",
-    refreshonly => true,
-    user => "$tomcat_user",
-  }
-
-  exec { 'clean_static_war': 
-    command => "/bin/rm -Rf ${application_dir}/webapps/static",
-    refreshonly => true,
-    user => "$tomcat_user",
-  }
-
-  exec {"unpack_war":
-    command => "/bin/mkdir -p ${war_dir}; /usr/bin/unzip -o -q ${war_file} -d ${war_dir}",
-    creates => "${war_dir}",
-    refreshonly => true,
-    user => "$tomcat_user",
-    notify => [ File["${war_dir}/WEB-INF/classes/META-INF/spring/discovery-database.properties"] ]
-  }
-
-  file { "$application_cache":
-    ensure => directory
-  }
-
-  file { "${war_dir}/WEB-INF/lib":
-    ensure  => directory,
-    require => [ Exec["unpack_war"], File["${war_file}"]]
-  }
-
-  exec { 'tidy-classes-jars':
-    command => "/usr/bin/find ${application_dir}/webapps/ROOT/WEB-INF/lib/*classes.jar -type f -exec rm {} \;",
-    onlyif  => "/usr/bin/find ${application_dir}/webapps/ROOT/WEB-INF/lib/*classes.jar -type f", 
-    require => [ File["${war_dir}/WEB-INF/lib"]]
-  }
-
-#  tidy { "${war_dir}/WEB-INF/lib/":
-#    recurse => true,
-#    matches => [ "*classes.jar" ],
-#    require => [ File["${war_dir}/WEB-INF/lib"]],
-#    notify  => Service["$application_name"]
-#  }
-
-#  file { "${war_dir}/WEB-INF/lib/riskflo-discovery-web-2.0.9-classes.jar":
-#    ensure  => absent,
-#    require => File["${war_dir}/WEB-INF/lib"],    
-#    notify  => Service["$application_name"]
-#  }
-
-#  file { "${war_dir}/WEB-INF/lib/riskflo-engage-web-2.0.9-classes.jar":
-#    ensure  => absent,
-#    require => File["${war_dir}/WEB-INF/lib"],    
-#    notify  => Service["$application_name"]
-#  }
-
-#  file { "${war_dir}/WEB-INF/lib/riskflo-irp-web-2.0.9-classes.jar":
-#    ensure  => absent,
-#    require => File["${war_dir}/WEB-INF/lib"],    
-#    notify  => Service["$application_name"]
-#  }
 }
