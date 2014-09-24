@@ -6,7 +6,7 @@ class tomcat7_rhel::discovery (
   $tomcat_user = "tomcat",
   $jvm_envs = "-server -Xms512m -Xmx3072m -XX:MaxPermSize=512m",
   $platform_version = "2.1.0",
-  $platform_snapshot = "20140912.080400-11",
+  $platform_snapshot = "20140828.060330-1",
   $static_version = "2.1.0",
   $static_snapshot = "20140912.092333-39",
   $database_server,
