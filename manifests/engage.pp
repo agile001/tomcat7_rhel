@@ -5,7 +5,7 @@ class tomcat7_rhel::engage (
   $tomcats_port = 8443,
   $tomcat_user = "tomcat",
   $jvm_envs = "-server -Xms512m -Xmx3072m -XX:MaxPermSize=512m",
-  $engage_version = "1.1.0",
+  $platform_version = "1.1.0",
   $platform_snapshot = "20140923.034702-4",
   $static_version = "1.1.0",
   $static_snapshot = "20140923.034729-4",
@@ -71,11 +71,11 @@ class tomcat7_rhel::engage (
   } 
   
   if $platform_snapshot == '' {
-    $engage_war = "riskflo-engage-web-$engage_version.war"
-    $engage_url = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/engage/riskflo-engage-web/$engage_version/riskflo-engage-web-$engage_version.war"
+    $engage_war = "riskflo-engage-web-${platform_version}.war"
+    $engage_url = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/engage/riskflo-engage-web/${platform_version}/riskflo-engage-web-${platform_version}.war"
   } else {
-    $engage_war = "riskflo-engage-web-${engage_version}-${platform_snapshot}.war"
-    $engage_url = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/engage/riskflo-engage-web/${engage_version}-SNAPSHOT/riskflo-engage-web-${engage_version}-${platform_snapshot}.war"
+    $engage_war = "riskflo-engage-web-${platform_version}-${platform_snapshot}.war"
+    $engage_url = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/engage/riskflo-engage-web/${platform_version}-SNAPSHOT/riskflo-engage-web-${platform_version}-${platform_snapshot}.war"
   }
   
   wget::fetch { "$engage_url":

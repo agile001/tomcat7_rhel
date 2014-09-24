@@ -5,10 +5,10 @@ class tomcat7_rhel::discovery (
   $tomcats_port = 8443,
   $tomcat_user = "tomcat",
   $jvm_envs = "-server -Xms512m -Xmx3072m -XX:MaxPermSize=512m",
-  $discovery_version = "2.1.0",
-  $platform_snapshot = "20140619.072517-23",
+  $platform_version = "2.1.0",
+  $platform_snapshot = "20140912.080400-11",
   $static_version = "2.1.0",
-  $static_snapshot = "20140619.071039-26",
+  $static_snapshot = "20140912.092333-39",
   $database_server,
   $database_instance,
   $database_uid,
@@ -71,11 +71,11 @@ class tomcat7_rhel::discovery (
   } 
   
   if $platform_snapshot == '' {
-    $discovery_war = "riskflo-platform-web-$discovery_version.war"
-    $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/discovery/riskflo-platform-web/$discovery_version/riskflo-platform-web-$discovery_version.war"
+    $discovery_war = "riskflo-platform-web-${platform_version}.war"
+    $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/discovery/riskflo-platform-web/${platform_version}/riskflo-platform-web-${platform_version}.war"
   } else {
-    $discovery_war = "discovery-platform-web-${discovery_version}-${platform_snapshot}.war"
-    $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/discovery/discovery-platform-web/${discovery_version}-SNAPSHOT/discovery-platform-web-${discovery_version}-${platform_snapshot}.war"
+    $discovery_war = "discovery-platform-web-${platform_version}-${platform_snapshot}.war"
+    $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/discovery/discovery-platform-web/${platform_version}-SNAPSHOT/discovery-platform-web-${platform_version}-${platform_snapshot}.war"
   }
   
   wget::fetch { "$discovery_url":
