@@ -74,8 +74,8 @@ class tomcat7_rhel::discovery (
     $discovery_war = "riskflo-platform-web-$discovery_version.war"
     $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/discovery/riskflo-platform-web/$discovery_version/riskflo-platform-web-$discovery_version.war"
   } else {
-    $discovery_war = "riskflo-platform-web-${discovery_version}-${platform_snapshot}.war"
-    $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/discovery/riskflo-platform-web/${discovery_version}-SNAPSHOT/riskflo-platform-web-${discovery_version}-${platform_snapshot}.war"
+    $discovery_war = "discovery-platform-web-${discovery_version}-${platform_snapshot}.war"
+    $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-snapshot-local/com/riskflo/discovery/discovery-platform-web/${discovery_version}-SNAPSHOT/discovery-platform-web-${discovery_version}-${platform_snapshot}.war"
   }
   
   wget::fetch { "$discovery_url":
