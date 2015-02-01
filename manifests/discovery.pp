@@ -66,7 +66,7 @@ class tomcat7_rhel::discovery (
   } 
   
   if $platform_snapshot == '' {
-    $discovery_war = "riskflo-platform-web-${platform_version}.war"
+    $discovery_war = "discovery-platform-web-${platform_version}.war"
     $discovery_url = "http://artifactory.riskflo.net.au/repository/libs-release-local/com/riskflo/discovery/discovery-platform-web/${platform_version}/discovery-platform-web-${platform_version}.war"
   } else {
     $discovery_war = "discovery-platform-web-${platform_version}-${platform_snapshot}.war"
